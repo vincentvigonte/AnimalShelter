@@ -236,6 +236,102 @@ def delete_adoption(adoption_id):
     except Exception as e:
         return jsonify({"error": "Database error", "details": str(e)}), 500
 
+#Crud for medical record
+@app.route("/medical_records", methods=["GET"])
+def get_medical_records():
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM Medical_Record")
+    records = cursor.fetchall()
+
+    if not records:
+        return jsonify({"error": "No medical records found"}), 404
+
+    records_list = [
+        {
+            "treatment_id": record[0],
+            "pet_id": record[1],
+            "treatment_date": record[2],
+            "treatment_details": record[3],
+            "veterinarian": record[4]
+        }
+        for record in records
+    ]
+
+    return jsonify(records_list), 200
+
+
+@app.route("/medical_records", methods=["POST"])
+def add_medical_record():
+    data = request.get_json()
+    pet_id = data.get("pet_id")
+    treatment_date = data.get("treatment_date")
+    treatment_details = data.get("treatment_details")
+    veterinarian = data.get("veterinarian")
+
+    # Validation
+    if not pet_id or not isinstance(pet_id, int):
+        return jsonify({"error": "Pet ID is required and must be an integer"}), 400
+    if not treatment_date:
+        return jsonify({"error": "Treatment date is required"}), 400
+    if not treatment_details or not isinstance(treatment_details, str):
+        return jsonify({"error": "Treatment details are required and must be a string"}), 400
+    if not veterinarian or not isinstance(veterinarian, str):
+        return jsonify({"error": "Veterinarian name is required and must be a string"}), 400
+
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute(
+            "INSERT INTO Medical_Record (pet_id, treatment_date, treatment_details, veterinarian) VALUES (%s, %s, %s, %s)",
+            (pet_id, treatment_date, treatment_details, veterinarian),
+        )
+        mysql.connection.commit()
+        return jsonify({"message": "Medical record created successfully", "treatment_id": cursor.lastrowid}), 201
+    except Exception as e:
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+
+
+@app.route("/medical_records/<int:treatment_id>", methods=["PUT"])
+def update_medical_record(treatment_id):
+    data = request.get_json()
+    treatment_date = data.get("treatment_date")
+    treatment_details = data.get("treatment_details")
+    veterinarian = data.get("veterinarian")
+
+    # Validation
+    if not treatment_date:
+        return jsonify({"error": "Treatment date is required"}), 400
+    if not treatment_details or not isinstance(treatment_details, str):
+        return jsonify({"error": "Treatment details are required and must be a string"}), 400
+    if not veterinarian or not isinstance(veterinarian, str):
+        return jsonify({"error": "Veterinarian name is required and must be a string"}), 400
+
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute(
+            "UPDATE Medical_Record SET treatment_date = %s, treatment_details = %s, veterinarian = %s WHERE treatment_id = %s",
+            (treatment_date, treatment_details, veterinarian, treatment_id),
+        )
+        mysql.connection.commit()
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Medical record not found"}), 404
+        return jsonify({"message": "Medical record updated successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+
+
+@app.route("/medical_records/<int:treatment_id>", methods=["DELETE"])
+def delete_medical_record(treatment_id):
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("DELETE FROM Medical_Record WHERE treatment_id = %s", (treatment_id,))
+        mysql.connection.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Medical record not found"}), 404
+
+        return jsonify({"message": "Medical record deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": "Database error", "details": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
