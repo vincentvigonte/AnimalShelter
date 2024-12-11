@@ -174,8 +174,11 @@ def fetch_all(query, params=None):
     cursor.close()
     return results
 
-#Crud for species
+# CRUD for species with token and role-based access control
+
+# GET SPECIES
 @app.route("/species", methods=["GET"])
+@token_required
 def get_species():
     species = fetch_all("SELECT * FROM Species")
     if not species:
@@ -183,7 +186,10 @@ def get_species():
     species_data = [{"species_id": s[0], "species_name": s[1]} for s in species]
     return jsonify({"success": True, "data": species_data, "total": len(species_data)}), HTTPStatus.OK
 
+# CREATE SPECIES
 @app.route("/species", methods=["POST"])
+@token_required
+@role_required(["admin", "staff"])  # Only admins or staff can add new species
 def create_species():
     data = request.get_json()
     species_name = data.get("species_name")
@@ -195,7 +201,10 @@ def create_species():
     mysql.connection.commit()
     return jsonify({"success": True, "data": {"species_id": cursor.lastrowid, "species_name": species_name}}), HTTPStatus.CREATED
 
+# UPDATE SPECIES
 @app.route("/species/<int:species_id>", methods=["PUT"])
+@token_required
+@role_required(["admin", "staff"])  # Only admins or staff can update species
 def update_species(species_id):
     data = request.get_json()
     species_name = data.get("species_name")
@@ -207,7 +216,10 @@ def update_species(species_id):
         return jsonify({"success": False, "error": "Species not found"}), HTTPStatus.NOT_FOUND
     return jsonify({"success": True, "message": "Species updated successfully"}), HTTPStatus.OK
 
+# DELETE SPECIES
 @app.route("/species/<int:species_id>", methods=["DELETE"])
+@token_required
+@role_required(["admin", "staff"])  # Only admins or staff can delete species
 def delete_species(species_id):
     cursor = mysql.connection.cursor()
     cursor.execute("DELETE FROM Species WHERE species_id = %s", (species_id,))
@@ -215,6 +227,7 @@ def delete_species(species_id):
     if cursor.rowcount == 0:
         return jsonify({"success": False, "error": "Species not found"}), HTTPStatus.NOT_FOUND
     return jsonify({"success": True, "message": "Species deleted successfully"}), HTTPStatus.OK
+
 
 # CRUD for pets with token and role-based access control
 
