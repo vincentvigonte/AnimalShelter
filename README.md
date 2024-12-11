@@ -8,7 +8,7 @@ A Flask-based REST API for managing pets, species, adoptions, and medical record
 
 To install the required dependencies, run:
 
-![alt text](finalHandsOnDrill\AnimalShelter\image\api_endpoints.png)
+![alt text](image\api_endpoints.png)
 
 ## Configuration
 
@@ -26,17 +26,17 @@ Environment variables needed:
 
 ## API Endpoints
 
-![alt text](finalHandsOnDrill\AnimalShelter\image\requirements.png)
+![alt text](image\requirements.png)
 
 ## Testing
 
 To run the tests, ensure pytest and pytest-flask are installed, then run:
 
-![alt text](finalHandsOnDrill\AnimalShelter\image\test.png)
+![alt text](image/test.png)
 
 ## Example Usage
 
-![alt text](finalHandsOnDrill\AnimalShelter\image\example.png)
+![alt text](image\example.png)
 
 ## Git Commit Guidelines
 
