@@ -268,7 +268,6 @@ def add_medical_record():
     treatment_details = data.get("treatment_details")
     veterinarian = data.get("veterinarian")
 
-    # Validation
     if not pet_id or not isinstance(pet_id, int):
         return jsonify({"error": "Pet ID is required and must be an integer"}), 400
     if not treatment_date:
@@ -297,7 +296,6 @@ def update_medical_record(treatment_id):
     treatment_details = data.get("treatment_details")
     veterinarian = data.get("veterinarian")
 
-    # Validation
     if not treatment_date:
         return jsonify({"error": "Treatment date is required"}), 400
     if not treatment_details or not isinstance(treatment_details, str):
