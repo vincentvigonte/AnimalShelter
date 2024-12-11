@@ -279,7 +279,92 @@ def test_delete_adoption_success(mock_db):
     assert b"Adoption deleted successfully" in response.data
 
 #Medical record test
+def test_get_medical_records_empty(mock_db):
+    mock_db.fetchall.return_value = [] 
+    
+    client = app.test_client()
+    response = client.get('/medical_records')
+    
+    assert response.status_code == 404
+    assert b"No medical records found" in response.data
 
+def test_get_medical_records(mock_db):
+    mock_db.fetchall.return_value = [
+        (1, 101, "2023-05-10", "Vaccination", "Dr. Smith"),
+        (2, 102, "2023-06-15", "Surgery", "Dr. Adams")
+    ]
+    
+    client = app.test_client()
+    response = client.get('/medical_records')
+    
+    assert response.status_code == 200
+    assert b"Vaccination" in response.data
+    assert b"Surgery" in response.data
+
+def test_post_medical_record_missing_fields(mock_db):
+    client = app.test_client()
+    response = client.post('/medical_records', json={})  
+    
+    assert response.status_code == 400
+    assert b"Pet ID is required" in response.data
+
+def test_post_medical_record_success(mock_db):
+    mock_db.lastrowid = 1 
+    
+    client = app.test_client()
+    response = client.post('/medical_records', json={
+        "pet_id": 101,
+        "treatment_date": "2023-05-10",
+        "treatment_details": "Vaccination",
+        "veterinarian": "Dr. Smith"
+    })
+    
+    assert response.status_code == 201
+    assert b"Medical record created successfully" in response.data
+
+def test_put_medical_record_not_found(mock_db):
+    mock_db.rowcount = 0  
+    
+    client = app.test_client()
+    response = client.put('/medical_records/999', json={
+        "treatment_date": "2023-08-10",
+        "treatment_details": "Updated treatment",
+        "veterinarian": "Dr. Lee"
+    })
+    
+    assert response.status_code == 404
+    assert b"Medical record not found" in response.data
+
+def test_put_medical_record_success(mock_db):
+    mock_db.rowcount = 1 
+    
+    client = app.test_client()
+    response = client.put('/medical_records/1', json={
+        "treatment_date": "2023-08-10",
+        "treatment_details": "Updated treatment",
+        "veterinarian": "Dr. Lee"
+    })
+    
+    assert response.status_code == 200
+    assert b"Medical record updated successfully" in response.data
+
+def test_delete_medical_record_not_found(mock_db):
+    mock_db.rowcount = 0 
+    
+    client = app.test_client()
+    response = client.delete('/medical_records/999')
+    
+    assert response.status_code == 404
+    assert b"Medical record not found" in response.data
+
+def test_delete_medical_record_success(mock_db):
+    mock_db.rowcount = 1 
+    
+    client = app.test_client()
+    response = client.delete('/medical_records/1')
+    
+    assert response.status_code == 200
+    assert b"Medical record deleted successfully" in response.data
 
 if __name__ == "__main__":
     pytest.main()
