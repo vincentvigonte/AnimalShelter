@@ -172,12 +172,113 @@ def test_delete_pet_not_found(mock_db):
 
 def test_delete_pet_success(mock_db):
     mock_db.rowcount = 1  
-    
+
     client = app.test_client()
     response = client.delete('/pets/1')
     
     assert response.status_code == 200
     assert b"Pet deleted successfully" in response.data
+
+#Adoption test
+def test_get_adoptions_empty(mock_db):
+    mock_db.fetchall.return_value = []  
+    
+    client = app.test_client()
+    response = client.get('/adoptions')
+    
+    assert response.status_code == 404
+    assert b"No adoptions found" in response.data
+
+def test_get_adoptions(mock_db):
+    mock_db.fetchall.return_value = [
+        (1, 101, "John", "Doe", "123 Street", "john.doe@example.com", "1234567890", "2023-05-10", None),
+        (2, 102, "Jane", "Smith", "456 Avenue", "jane.smith@example.com", "0987654321", "2023-06-15", "2023-07-01")
+    ]
+    
+    client = app.test_client()
+    response = client.get('/adoptions')
+    
+    assert response.status_code == 200
+    assert b"John" in response.data
+    assert b"Jane" in response.data
+
+def test_post_adoption_missing_fields(mock_db):
+    client = app.test_client()
+    response = client.post('/adoptions', json={})
+    
+    assert response.status_code == 400
+    assert b"Pet ID is required" in response.data
+
+def test_post_adoption_success(mock_db):
+    mock_db.lastrowid = 1  
+    
+    client = app.test_client()
+    response = client.post('/adoptions', json={
+        "pet_id": 101,
+        "first_name": "John",
+        "last_name": "Doe",
+        "address": "123 Street",
+        "email": "john.doe@example.com",
+        "phone": "1234567890",
+        "adoption_date": "2023-05-10"
+    })
+    
+    assert response.status_code == 201
+    assert b"Adoption created successfully" in response.data
+
+def test_put_adoption_not_found(mock_db):
+    mock_db.rowcount = 0  
+    
+    client = app.test_client()
+    response = client.put('/adoptions/999', json={
+        "first_name": "Updated",
+        "last_name": "Name",
+        "address": "Updated Address",
+        "email": "updated@example.com",
+        "phone": "9876543210",
+        "adoption_date": "2023-08-10",
+        "date_returned": "2023-09-01"
+    })
+    
+    assert response.status_code == 404
+    assert b"Adoption not found" in response.data
+
+def test_put_adoption_success(mock_db):
+    mock_db.rowcount = 1  
+    
+    client = app.test_client()
+    response = client.put('/adoptions/1', json={
+        "first_name": "Updated",
+        "last_name": "Name",
+        "address": "Updated Address",
+        "email": "updated@example.com",
+        "phone": "9876543210",
+        "adoption_date": "2023-08-10",
+        "date_returned": "2023-09-01"
+    })
+    
+    assert response.status_code == 200
+    assert b"Adoption updated successfully" in response.data
+
+def test_delete_adoption_not_found(mock_db):
+    mock_db.rowcount = 0 
+    
+    client = app.test_client()
+    response = client.delete('/adoptions/999')
+    
+    assert response.status_code == 404
+    assert b"Adoption not found" in response.data
+
+def test_delete_adoption_success(mock_db):
+    mock_db.rowcount = 1  
+    
+    client = app.test_client()
+    response = client.delete('/adoptions/1')
+    
+    assert response.status_code == 200
+    assert b"Adoption deleted successfully" in response.data
+
+#Medical record test
 
 
 if __name__ == "__main__":
