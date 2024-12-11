@@ -14,3 +14,22 @@ mysql = MySQL(app)
 @app.route("/")
 def hello_user():
     return "ANIMAL SHELTER API"
+
+# Utility function to fetch a single row by ID
+def fetch_one(query, params):
+    cursor = mysql.connection.cursor()
+    cursor.execute(query, params)
+    result = cursor.fetchone()
+    cursor.close()
+    return result
+
+# Utility function to fetch multiple rows
+def fetch_all(query, params=None):
+    cursor = mysql.connection.cursor()
+    if params:
+        cursor.execute(query, params)
+    else:
+        cursor.execute(query)
+    results = cursor.fetchall()
+    cursor.close()
+    return results
