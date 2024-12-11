@@ -76,7 +76,7 @@ def delete_species(species_id):
         return jsonify({"success": False, "error": "Species not found"}), HTTPStatus.NOT_FOUND
     return jsonify({"success": True, "message": "Species deleted successfully"}), HTTPStatus.OK
 
-#Crud for pets
+#Crud for pet
 @app.route("/pets", methods=["GET"])
 def get_pets():
     pets = fetch_all("SELECT * FROM Pet")
@@ -134,6 +134,108 @@ def delete_pet(pet_id):
     if cursor.rowcount == 0:
         return jsonify({"error": "Pet not found"}), HTTPStatus.NOT_FOUND
     return jsonify({"message": "Pet deleted successfully"}), HTTPStatus.OK
+
+#Crud for adoption
+@app.route("/adoptions", methods=["GET"])
+def get_adoptions():
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM Adoption")
+    adoptions = cursor.fetchall()
+
+    if not adoptions:
+        return jsonify({"error": "No adoptions found"}), 404
+
+    adoptions_list = [
+        {
+            "adoption_id": adoption[0],
+            "pet_id": adoption[1],
+            "first_name": adoption[2],
+            "last_name": adoption[3],
+            "address": adoption[4],
+            "email": adoption[5],
+            "phone": adoption[6],
+            "adoption_date": adoption[7],
+            "date_returned": adoption[8]
+        }
+        for adoption in adoptions
+    ]
+
+    return jsonify(adoptions_list), 200
+
+
+@app.route("/adoptions", methods=["POST"])
+def add_adoption():
+    data = request.get_json()
+    pet_id = data.get("pet_id")
+    first_name = data.get("first_name")
+    last_name = data.get("last_name")
+    adoption_date = data.get("adoption_date")
+
+    if not pet_id or not isinstance(pet_id, int):
+        return jsonify({"error": "Pet ID is required and must be an integer"}), 400
+    if not first_name or not isinstance(first_name, str):
+        return jsonify({"error": "First name is required and must be a string"}), 400
+    if not last_name or not isinstance(last_name, str):
+        return jsonify({"error": "Last name is required and must be a string"}), 400
+    if not adoption_date:
+        return jsonify({"error": "Adoption date is required"}), 400
+
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute(
+            "INSERT INTO Adoption (pet_id, first_name, last_name, address, email, phone, adoption_date, date_returned) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            (pet_id, first_name, last_name, data.get("address"), data.get("email"), data.get("phone"), adoption_date, data.get("date_returned")),
+        )
+        mysql.connection.commit()
+        return jsonify({"message": "Adoption created successfully", "adoption_id": cursor.lastrowid}), 201
+    except Exception as e:
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+
+
+@app.route("/adoptions/<int:adoption_id>", methods=["PUT"])
+def update_adoption(adoption_id):
+    data = request.get_json()
+    first_name = data.get("first_name")
+    last_name = data.get("last_name")
+    address = data.get("address")
+    email = data.get("email")
+    phone = data.get("phone")
+    adoption_date = data.get("adoption_date")
+    date_returned = data.get("date_returned")
+
+    if not first_name or not isinstance(first_name, str):
+        return jsonify({"error": "First name is required and must be a string"}), 400
+    if not last_name or not isinstance(last_name, str):
+        return jsonify({"error": "Last name is required and must be a string"}), 400
+
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute(
+            "UPDATE Adoption SET first_name = %s, last_name = %s, address = %s, email = %s, phone = %s, adoption_date = %s, date_returned = %s WHERE adoption_id = %s",
+            (first_name, last_name, address, email, phone, adoption_date, date_returned, adoption_id),
+        )
+        mysql.connection.commit()
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Adoption not found"}), 404
+        return jsonify({"message": "Adoption updated successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+
+
+@app.route("/adoptions/<int:adoption_id>", methods=["DELETE"])
+def delete_adoption(adoption_id):
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("DELETE FROM Adoption WHERE adoption_id = %s", (adoption_id,))
+        mysql.connection.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Adoption not found"}), 404
+
+        return jsonify({"message": "Adoption deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)
