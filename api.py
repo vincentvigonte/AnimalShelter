@@ -75,3 +75,66 @@ def delete_species(species_id):
     if cursor.rowcount == 0:
         return jsonify({"success": False, "error": "Species not found"}), HTTPStatus.NOT_FOUND
     return jsonify({"success": True, "message": "Species deleted successfully"}), HTTPStatus.OK
+
+#Crud for pets
+@app.route("/pets", methods=["GET"])
+def get_pets():
+    pets = fetch_all("SELECT * FROM Pet")
+    pets_data = [{
+        "pet_id": pet[0], "name": pet[1], "species_id": pet[2], "breed_name": pet[3], 
+        "age": pet[4], "color": pet[5], "gender": pet[6], "adopted": pet[7], 
+        "date_arrived": pet[8], "date_adopted": pet[9]
+    } for pet in pets]
+    return jsonify({"success": True, "data": pets_data, "total": len(pets_data)}), HTTPStatus.OK
+
+@app.route("/pets", methods=["POST"])
+def create_pet():
+    data = request.get_json()
+    name = data.get("name")
+    species_id = data.get("species_id")
+    breed_name = data.get("breed_name")
+    age = data.get("age")
+    color = data.get("color")
+    gender = data.get("gender")
+    date_arrived = data.get("date_arrived")
+
+    cursor = mysql.connection.cursor()
+    cursor.execute(
+        "INSERT INTO Pet (name, species_id, breed_name, age, color, gender, date_arrived) VALUES (%s, %s, %s, %s, %s, %s, %s)", 
+        (name, species_id, breed_name, age, color, gender, date_arrived)
+    )
+    mysql.connection.commit()
+    return jsonify({"success": True, "data": {"pet_id": cursor.lastrowid}}), HTTPStatus.CREATED
+
+@app.route("/pets/<int:pet_id>", methods=["PUT"])
+def update_pet(pet_id):
+    data = request.get_json()
+    name = data.get("name")
+    species_id = data.get("species_id")
+    breed_name = data.get("breed_name")
+    age = data.get("age")
+    color = data.get("color")
+    gender = data.get("gender")
+
+    cursor = mysql.connection.cursor()
+    cursor.execute(
+        "UPDATE Pet SET name = %s, species_id = %s, breed_name = %s, age = %s, color = %s, gender = %s WHERE pet_id = %s",
+        (name, species_id, breed_name, age, color, gender, pet_id)
+    )
+    mysql.connection.commit()
+    if cursor.rowcount == 0:
+        return jsonify({"error": "Pet not found"}), HTTPStatus.NOT_FOUND
+    return jsonify({"message": "Pet updated successfully"}), HTTPStatus.OK
+
+@app.route("/pets/<int:pet_id>", methods=["DELETE"])
+def delete_pet(pet_id):
+    cursor = mysql.connection.cursor()
+    cursor.execute("DELETE FROM Pet WHERE pet_id = %s", (pet_id,))
+    mysql.connection.commit()
+    if cursor.rowcount == 0:
+        return jsonify({"error": "Pet not found"}), HTTPStatus.NOT_FOUND
+    return jsonify({"message": "Pet deleted successfully"}), HTTPStatus.OK
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
