@@ -23,6 +23,7 @@ Environment variables needed:
     > MYSQL_USER: MySQL username (e.g., root).
     > MYSQL_PASSWORD: MySQL password (e.g., root).
     > MYSQL_DB: Name of the database (e.g., animal_shelter).
+    > SECRET_KEY = "vincent7"
 
 ## API Endpoints
 
@@ -46,5 +47,5 @@ Use conventional commits for clarity:
     > fix: resolve a bug or issue (e.g., fix: correct species retrieval error)
     > docs: update documentation (e.g., docs: update API documentation)
     > test: add or update tests (e.g., test: add mock tests for pet CRUD operations)
-    > build: creating new file (e.g., build: initials files)
+    > build: creating new file (e.g., build: initial files)
 
