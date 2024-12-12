@@ -52,8 +52,9 @@ Environment variables needed:
 ## Testing
 
 To run the tests, ensure pytest and pytest-flask are installed, then run:
-
-![Testing Image](image/test.png)
+| Command                       | Description                                   |
+|-------------------------------|-----------------------------------------------|
+| `pytest apiTest.py` | Test the API endpoints |
 
 ## Example Usage
 
