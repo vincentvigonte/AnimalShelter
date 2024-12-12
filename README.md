@@ -7,8 +7,10 @@ A Flask-based REST API for managing pets, species, adoptions, and medical record
 ## Installation
 
 To install the required dependencies, run:
+| Command                       | Description                                   |
+|-------------------------------|-----------------------------------------------|
+| `pip install -r requirements.txt` | Installs all dependencies listed in the `requirements.txt` file. |
 
-![API Endpoints](image/requirements.png)
 
 ## Configuration
 
@@ -55,7 +57,16 @@ To run the tests, ensure pytest and pytest-flask are installed, then run:
 
 ## Example Usage
 
-![Example Usage](image/example.png)
+| **Category**               | **Endpoint**                  | **Method** | **Description**                                               | **Requires Authentication** | **Role Required**          |
+|----------------------------|-------------------------------|------------|---------------------------------------------------------------|------------------------------|----------------------------|
+| **Authentication**         | `/login`                     | POST       | User login, generates JWT token.                              | No                           | N/A                        |
+|                            | `/register`                  | POST       | User registration with hashed password stored in `users.json`. | No                           | N/A                        |
+| **Token Validation**       | `/validate-token`            | GET        | Validates the provided JWT token.                             | Yes                          | N/A                        |
+| **Species Management**     | `/species`                   | GET        | Retrieve all species.                                         | No                           | N/A                        |
+|                            | `/species`                   | POST       | Add a new species.                                            | Yes                          | Any authenticated user     |
+|                            | `/species/<id>`              | PUT        | Update an existing species.                                   | Yes                          | Admin/Staff                |
+|                            | `/species/<id>`              | DELETE     | Delete a species record.                                      | Yes                          | Admin/Staff                |
+
 
 ## Git Commit Guidelines
 
