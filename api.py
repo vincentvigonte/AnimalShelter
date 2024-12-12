@@ -13,7 +13,7 @@ app = Flask(__name__)
 app.config["MYSQL_HOST"] = "localhost"
 app.config["MYSQL_USER"] = "root"
 app.config["MYSQL_PASSWORD"] = "root"
-app.config["MYSQL_DB"] = "animal_shelter"
+app.config["MYSQL_DB"] = "animal_shelter" 
 app.config["SECRET_KEY"] = "vincent7"
 
 mysql = MySQL(app)
@@ -67,7 +67,7 @@ def register():
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")
-    role = data.get("role", "user")  
+    role = data.get("role", "users")  
 
     if not username or not password:
         return jsonify({"error": "Username and password are required"}), 400
@@ -116,44 +116,98 @@ def role_required(required_roles):
         return wrapper
     return decorator
 
-
-
 @app.route("/")
 def hello_world():
     style = """
         <style>
-            p {
-                font-family: Arial, sans-serif;
-                font-size: 20px;
-                color: blue;
+            body {
+                font-family: 'Arial', sans-serif;
+                background: linear-gradient(135deg, #d1eaff, #a9d7f5);
+                margin: 0;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                color: #4b9cdd;
+            }
+            h1 {
+                font-size: 50px;
+                color: #4f8cc9;
+                text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1);
+                margin-bottom: 30px;
                 text-align: center;
+                animation: fadeIn 1.5s ease-out;
+            }
+            p {
+                font-size: 22px;
+                color: #5f9fcf;
+                margin-bottom: 40px;
+                text-align: center;
+                animation: fadeIn 2s ease-out;
+                font-weight: bold;
+            }
+            .link-container {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 20px;
             }
             a {
-                font-family: Arial, sans-serif;
-                font-size: 20px;
-                color: green;
+                font-size: 22px;
+                color: #ffffff;
                 text-decoration: none;
+                background-color: #6fb6d8;
+                padding: 15px 30px;
+                margin: 10px;
+                border-radius: 25px;
+                transition: all 0.3s ease;
+                box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.1);
+                border: 2px solid #5c9cc3;
             }
             a:hover {
-                text-decoration: underline;
+                background-color: #82c5e5;
+                transform: scale(1.05);
+                box-shadow: 0px 12px 20px rgba(0, 0, 0, 0.1);
+            }
+            a:active {
+                transform: scale(1.03);
+                background-color: #66aad1;
+            }
+            .icon {
+                width: 40px;
+                height: 40px;
+                margin-right: 10px;
+                vertical-align: middle;
+            }
+            @keyframes fadeIn {
+                0% { opacity: 0; }
+                100% { opacity: 1; }
             }
         </style>
     """
     
+    # Define the links with animal-related names and icons
     no_token_routes = [
-        {"name": "Home", "url": "/"},
-        {"name": "View Pet", "url": "/pet"},
-        {"name": "View Adoption", "url": "/adoption"},
+        {"name": "Home", "url": "/", "icon": "🏠"},
+        {"name": "View Species", "url": "/species", "icon": "🐾"},
+        {"name": "View Pet", "url": "/pets", "icon": "🐶"},
+        {"name": "View Adoption", "url": "/adoptions", "icon": "💚"},
+        {"name": "View Medical Record", "url": "/medical_records", "icon": "📋"},
     ]
-
-    no_token_links = "".join([f'<p><a href="{route["url"]}">{route["name"]}</a></p>' for route in no_token_routes])
     
+    # Create the links with their respective icons
+    no_token_links = "".join([f'<a href="{route["url"]}"><span class="icon">{route["icon"]}</span>{route["name"]}</a>' for route in no_token_routes])
+
     return f"""
         {style}
-        <p>ANIMAL SHELTER MANAGEMENT SYSTEM</p>
-        {no_token_links}
+        <h1>Welcome to the Animal Shelter</h1>
+        <p>Your one-stop destination to manage and view our beloved pets.</p>
+        <div class="link-container">
+            {no_token_links}
+        </div>
     """
-
 
 # Utility function to fetch a single row by ID
 def fetch_one(query, params):
@@ -174,11 +228,11 @@ def fetch_all(query, params=None):
     cursor.close()
     return results
 
-# CRUD for species with token and role-based access control
 
-# GET SPECIES
+
+# CRUD for species
+
 @app.route("/species", methods=["GET"])
-@token_required
 def get_species():
     species = fetch_all("SELECT * FROM Species")
     if not species:
@@ -186,10 +240,8 @@ def get_species():
     species_data = [{"species_id": s[0], "species_name": s[1]} for s in species]
     return jsonify({"success": True, "data": species_data, "total": len(species_data)}), HTTPStatus.OK
 
-# CREATE SPECIES
 @app.route("/species", methods=["POST"])
 @token_required
-@role_required(["admin", "staff"])  # Only admins or staff can add new species
 def create_species():
     data = request.get_json()
     species_name = data.get("species_name")
@@ -201,10 +253,9 @@ def create_species():
     mysql.connection.commit()
     return jsonify({"success": True, "data": {"species_id": cursor.lastrowid, "species_name": species_name}}), HTTPStatus.CREATED
 
-# UPDATE SPECIES
 @app.route("/species/<int:species_id>", methods=["PUT"])
 @token_required
-@role_required(["admin", "staff"])  # Only admins or staff can update species
+@role_required(["admin", "staff"])  #
 def update_species(species_id):
     data = request.get_json()
     species_name = data.get("species_name")
@@ -216,10 +267,9 @@ def update_species(species_id):
         return jsonify({"success": False, "error": "Species not found"}), HTTPStatus.NOT_FOUND
     return jsonify({"success": True, "message": "Species updated successfully"}), HTTPStatus.OK
 
-# DELETE SPECIES
 @app.route("/species/<int:species_id>", methods=["DELETE"])
 @token_required
-@role_required(["admin", "staff"])  # Only admins or staff can delete species
+@role_required(["admin", "staff"]) 
 def delete_species(species_id):
     cursor = mysql.connection.cursor()
     cursor.execute("DELETE FROM Species WHERE species_id = %s", (species_id,))
@@ -228,12 +278,8 @@ def delete_species(species_id):
         return jsonify({"success": False, "error": "Species not found"}), HTTPStatus.NOT_FOUND
     return jsonify({"success": True, "message": "Species deleted successfully"}), HTTPStatus.OK
 
-
-# CRUD for pets with token and role-based access control
-
-# READ PETS
+# CRUD for pets
 @app.route("/pets", methods=["GET"])
-@token_required
 def get_pets():
     pets = fetch_all("SELECT * FROM Pet")
     pets_data = [{
@@ -243,10 +289,8 @@ def get_pets():
     } for pet in pets]
     return jsonify({"success": True, "data": pets_data, "total": len(pets_data)}), HTTPStatus.OK
 
-# ADD PET
 @app.route("/pets", methods=["POST"])
 @token_required
-@role_required(["staff", "admin"])  # Only staff or admin can add pets
 def create_pet():
     data = request.get_json()
     name = data.get("name")
@@ -265,10 +309,9 @@ def create_pet():
     mysql.connection.commit()
     return jsonify({"success": True, "data": {"pet_id": cursor.lastrowid}}), HTTPStatus.CREATED
 
-# UPDATE PET
 @app.route("/pets/<int:pet_id>", methods=["PUT"])
 @token_required
-@role_required(["staff", "admin"])  # Only staff or admin can update pets
+@role_required(["admin", "staff"])
 def update_pet(pet_id):
     data = request.get_json()
     name = data.get("name")
@@ -288,10 +331,9 @@ def update_pet(pet_id):
         return jsonify({"error": "Pet not found"}), HTTPStatus.NOT_FOUND
     return jsonify({"message": "Pet updated successfully"}), HTTPStatus.OK
 
-# DELETE PET
 @app.route("/pets/<int:pet_id>", methods=["DELETE"])
 @token_required
-@role_required(["staff", "admin"])  # Only staff or admin can delete pets
+@role_required(["admin", "staff"])
 def delete_pet(pet_id):
     cursor = mysql.connection.cursor()
     cursor.execute("DELETE FROM Pet WHERE pet_id = %s", (pet_id,))
@@ -300,7 +342,7 @@ def delete_pet(pet_id):
         return jsonify({"error": "Pet not found"}), HTTPStatus.NOT_FOUND
     return jsonify({"message": "Pet deleted successfully"}), HTTPStatus.OK
 
-#Crud for adoption
+# CRUD for adoptions
 @app.route("/adoptions", methods=["GET"])
 def get_adoptions():
     cursor = mysql.connection.cursor()
@@ -327,8 +369,8 @@ def get_adoptions():
 
     return jsonify(adoptions_list), 200
 
-
 @app.route("/adoptions", methods=["POST"])
+@token_required
 def add_adoption():
     data = request.get_json()
     pet_id = data.get("pet_id")
@@ -356,8 +398,9 @@ def add_adoption():
     except Exception as e:
         return jsonify({"error": "Database error", "details": str(e)}), 500
 
-
 @app.route("/adoptions/<int:adoption_id>", methods=["PUT"])
+@token_required
+@role_required(["admin", "staff"])
 def update_adoption(adoption_id):
     data = request.get_json()
     first_name = data.get("first_name")
@@ -386,8 +429,9 @@ def update_adoption(adoption_id):
     except Exception as e:
         return jsonify({"error": "Database error", "details": str(e)}), 500
 
-
 @app.route("/adoptions/<int:adoption_id>", methods=["DELETE"])
+@token_required
+@role_required(["admin", "staff"])
 def delete_adoption(adoption_id):
     try:
         cursor = mysql.connection.cursor()
@@ -401,7 +445,7 @@ def delete_adoption(adoption_id):
     except Exception as e:
         return jsonify({"error": "Database error", "details": str(e)}), 500
 
-#Crud for medical record
+# CRUD for medical records
 @app.route("/medical_records", methods=["GET"])
 def get_medical_records():
     cursor = mysql.connection.cursor()
@@ -424,8 +468,8 @@ def get_medical_records():
 
     return jsonify(records_list), 200
 
-
 @app.route("/medical_records", methods=["POST"])
+@token_required
 def add_medical_record():
     data = request.get_json()
     pet_id = data.get("pet_id")
@@ -453,8 +497,9 @@ def add_medical_record():
     except Exception as e:
         return jsonify({"error": "Database error", "details": str(e)}), 500
 
-
 @app.route("/medical_records/<int:treatment_id>", methods=["PUT"])
+@token_required
+@role_required(["admin", "staff"])
 def update_medical_record(treatment_id):
     data = request.get_json()
     treatment_date = data.get("treatment_date")
@@ -481,8 +526,9 @@ def update_medical_record(treatment_id):
     except Exception as e:
         return jsonify({"error": "Database error", "details": str(e)}), 500
 
-
 @app.route("/medical_records/<int:treatment_id>", methods=["DELETE"])
+@token_required
+@role_required(["admin", "staff"])
 def delete_medical_record(treatment_id):
     try:
         cursor = mysql.connection.cursor()
@@ -495,6 +541,7 @@ def delete_medical_record(treatment_id):
         return jsonify({"message": "Medical record deleted successfully"}), 200
     except Exception as e:
         return jsonify({"error": "Database error", "details": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)
